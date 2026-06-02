@@ -4,6 +4,8 @@ import random
 
 import pygame
 
+#Necesito
+
 # Estados del juego
 ESTADO_INICIO = "inicio"
 ESTADO_INSTRUCCIONES = "instrucciones"
