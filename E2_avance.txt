@@ -1,1 +1,2 @@
-En el Avance Numero 2 de Nuestro trabajo, lo que agregamos fue El codigo para el movimiento del Juego
+En el Avance Numero 2 de Nuestro trabajo, lo que agregamos fue El codigo para el movimiento del Juego siendo este un movimiento con las teclas W A S D, donde por cada vez que se apreta la tecla el jugador se mueve.
+Y tambien agreagamos la Carpeta llamada Assets donde estan las imagen en PNG que se utilizaran mas adelante para la creacion de las entidades, bloques y los elementos del juego
