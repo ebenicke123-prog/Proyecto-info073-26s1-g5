@@ -29,7 +29,13 @@ VACIO = 0
 OBSTACULO = 1
 JUGADOR = 2
 MANZANA = 3
-
+ROCA = 4
+ARBOL = 5
+LOTO = 6
+PINO  = 7
+ROCA_AMARILLA = 8
+ROCA_AZUL = 9
+ARBUSTO = 10
 # Tamaño del tablero
 # Si se cambian estas constantes, se debe modificar la definición
 # del tablero que se encuentra en función reiniciar().
@@ -43,7 +49,7 @@ def aparecer_aleatorio(tablero, id_elem):
 
     Parámetros:
         - tablero: El tablero con sus posiciones actuales.
-        - id_elem: El número identificador del elemento que queremos colocar.
+        - id_elem: El n úmero identificador del elemento que queremos colocar.
 
     Retorna:
         - (columna, fila): Tupla que indica posición en la que se colocó el elemento.
@@ -160,7 +166,35 @@ def refrescar_tablero(screen, tablero):
                         (ancho_elem - 20, alto_elem - 20),
                     ),
                 )
-
+            #Parte experimetal sobre agregar imagenes en casillas del tablero
+            elif tablero[i][j] == ROCA:
+                imagen_roca = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgroca.png")
+                
+                screen.blit(imagen_roca, (pos_x, pos_y))
+            elif tablero[i][j] == ARBOL:
+                imagen_arbol = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgarbol.png")
+                
+                screen.blit(imagen_arbol, (pos_x, pos_y))
+            elif tablero[i][j] == LOTO:
+                imagen_loto = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgloto.png")
+                
+                screen.blit(imagen_loto, (pos_x, pos_y))
+            elif tablero[i][j] == PINO:
+                imagen_pino = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgpino.png")
+               
+                screen.blit(imagen_pino, (pos_x, pos_y))   
+            elif tablero[i][j] == ROCA_AMARILLA:
+                imagen_roca_amarilla = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgrocaamarilla.png")
+    
+                screen.blit(imagen_roca_amarilla, (pos_x, pos_y))
+            elif tablero[i][j] == ROCA_AZUL:
+                imagen_roca_azul = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgrocaazul.png")
+                screen.blit(imagen_roca_azul, (pos_x, pos_y))
+            elif tablero[i][j] == ARBUSTO:
+                imagen_arbusto = pygame.image.load(r"C:\Users\minec\Documents\ProyectoCapi\Proyecto-info073-26s1-g5\Assets\Bloques\imgarbusto.png")
+                screen.blit(imagen_arbusto, (pos_x, pos_y))
+            
+            
             # Estamos recorriendo los píxeles de la pantalla, por lo que
             # debemos sumar el ancho y altura en pixeles de cada elemento que
             # ya hayamos recorrido para avanzar al siguiente.
