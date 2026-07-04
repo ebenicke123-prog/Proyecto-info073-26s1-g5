@@ -1,26 +1,26 @@
 import pygame
 import sys
 import os
-
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 pygame.init()
 
-TILE = 40
-COLS = 15
+TILE  = 40
+COLS  = 15
 FILAS = 15
 ANCHO = TILE * COLS
-ALTO  = TILE * FILAS + 60  # 60px extra para la barra de frutas
+ALTO  = TILE * FILAS + 60
 
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Mapa 15x15")
 reloj = pygame.time.Clock()
 
-# Colores
-BLANCO = (255, 255, 255)
-NEGRO  = (0,   0,   0)
-AZUL   = (70,  130, 180)
-VERDE  = (34,  139,  34)
+BLANCO  = (255, 255, 255)
+NEGRO   = (0,   0,   0)
+AZUL    = (70,  130, 180)
+VERDE   = (34,  139,  34)
+ROJO    = (200,  30,  30)
+AMARILLO= (255, 220,   0)
 
 # Mapa: 0=piso, 2=arbol, 3=roca, 4=pino
 MAPA = [
@@ -40,13 +40,22 @@ MAPA = [
     [0,0,0,3,4,0,0,0,0,0,5,0,0,0,5],
     [0,0,0,0,0,0,0,0,0,0,5,5,5,5,5],
 ]
+ 
 
-# Frutas: lista de (col, fila, tipo)
-# tipo: "sandia", "manzana", "naranja", "platano"
-frutas = [
-    {"col": 2,  "fila": 0,  "tipo": "naranja"},
-    {"col": 1,  "fila": 10,  "tipo": "manzana"},
-    {"col": 12, "fila": 2,  "tipo": "naranja"},
+# Lotos: posiciones fijas en el mapa
+LOTOS = [
+    {"col": 12, "fila": 2},
+    {"col": 13, "fila": 2},
+]
+
+# Pesa: posición en el mapa
+pesa = {"col": 10, "fila": 2, "activa": True}
+
+# Frutas
+frutas_iniciales = [
+    {"col": 5,  "fila": 3,  "tipo": "sandia"},
+    {"col": 9,  "fila": 7,  "tipo": "manzana"},
+    {"col": 12, "fila": 4,  "tipo": "naranja"},
     {"col": 7,  "fila": 11, "tipo": "platano"},
     {"col": 3,  "fila": 6,  "tipo": "sandia"},
     {"col": 11, "fila": 13, "tipo": "manzana"},
@@ -54,53 +63,62 @@ frutas = [
     {"col": 14, "fila": 5,  "tipo": "platano"},
 ]
 
-# Contador de frutas recogidas
-conteo = {"sandia": 0, "manzana": 0, "naranja": 0, "platano": 0}
+def estado_inicial():
+    return {
+        "jugador_col":  0,
+        "jugador_fila": 2,
+        "frutas": [dict(f) for f in frutas_iniciales],
+        "conteo": {"sandia": 0, "manzana": 0, "naranja": 0, "platano": 0},
+        "tiene_pesa": False,
+        "pesa_activa": True,
+        "game_over": False,
+    }
 
-# Posición del jugador
-jugador_col  = 0
-jugador_fila = 2
+estado = estado_inicial()
 
 def es_pared(col, fila):
     if fila < 0 or fila >= FILAS or col < 0 or col >= COLS:
         return True
-    return MAPA[fila][col] in (2, 3, 4, 5)
+    return MAPA[fila][col] in (2, 3, 4, 5)  # 2=arbol, 3=roca, 4=pino, 5=arbusto
 
 fuente      = pygame.font.SysFont("monospace", 16)
 fuente_hud  = pygame.font.SysFont("monospace", 18, bold=True)
+fuente_go   = pygame.font.SysFont("monospace", 60, bold=True)
+fuente_sub  = pygame.font.SysFont("monospace", 24)
 
-# Cargar imágenes del mapa
-img_pasto = pygame.image.load("imgPasto.png").convert()
-img_pasto = pygame.transform.scale(img_pasto, (TILE, TILE))
+FTILE = 30
+FHUD  = 28
 
-img_arbol = pygame.image.load("imgarbol.png").convert_alpha()
-img_arbol = pygame.transform.scale(img_arbol, (TILE, TILE))
-
-img_roca = pygame.image.load("imgroca.png").convert_alpha()
-img_roca = pygame.transform.scale(img_roca, (TILE, TILE))
-
-img_pino = pygame.image.load("imgpino.png").convert_alpha()
-img_pino = pygame.transform.scale(img_pino, (TILE, TILE))
-
-img_arbusto = pygame.image.load("imgarbusto.png").convert_alpha()
-img_arbusto = pygame.transform.scale(img_arbusto, (TILE, TILE))
-
-# Cargar imágenes de frutas (tamaño en mapa y tamaño en HUD)
-FTILE = 30  # tamaño fruta en el mapa
-FHUD  = 28  # tamaño fruta en la barra
+img_pasto = pygame.transform.scale(pygame.image.load("imgPasto.png").convert(),        (TILE, TILE))
+img_arbol = pygame.transform.scale(pygame.image.load("imgarbol.png").convert_alpha(),  (TILE, TILE))
+img_roca  = pygame.transform.scale(pygame.image.load("imgroca.png").convert_alpha(),   (TILE, TILE))
+img_pino  = pygame.transform.scale(pygame.image.load("imgpino.png").convert_alpha(),   (TILE, TILE))
+img_loto   = pygame.transform.scale(pygame.image.load("imglotoPiso.png").convert_alpha(), (TILE, TILE))
+img_arbusto = pygame.transform.scale(pygame.image.load("imgarbusto.png").convert_alpha(), (TILE, TILE))
+img_pesa  = pygame.transform.scale(pygame.image.load("IMGpesa.png").convert_alpha(),   (FTILE, FTILE))
 
 imgs_fruta = {
-    "sandia":  pygame.transform.scale(pygame.image.load("IMGsandia.png").convert_alpha(),  (FTILE, FTILE)),
-    "manzana": pygame.transform.scale(pygame.image.load("IMGmanzana.png").convert_alpha(), (FTILE, FTILE)),
-    "naranja": pygame.transform.scale(pygame.image.load("IMGnaranja.png").convert_alpha(), (FTILE, FTILE)),
-    "platano": pygame.transform.scale(pygame.image.load("IMGplatano.png").convert_alpha(), (FTILE, FTILE)),
+    t: pygame.transform.scale(pygame.image.load(f"IMG{t}.png").convert_alpha(), (FTILE, FTILE))
+    for t in ["sandia", "manzana", "naranja", "platano"]
 }
 imgs_hud = {
-    "sandia":  pygame.transform.scale(pygame.image.load("IMGsandia.png").convert_alpha(),  (FHUD, FHUD)),
-    "manzana": pygame.transform.scale(pygame.image.load("IMGmanzana.png").convert_alpha(), (FHUD, FHUD)),
-    "naranja": pygame.transform.scale(pygame.image.load("IMGnaranja.png").convert_alpha(), (FHUD, FHUD)),
-    "platano": pygame.transform.scale(pygame.image.load("IMGplatano.png").convert_alpha(), (FHUD, FHUD)),
+    t: pygame.transform.scale(pygame.image.load(f"IMG{t}.png").convert_alpha(), (FHUD, FHUD))
+    for t in ["sandia", "manzana", "naranja", "platano"]
 }
+img_pesa_hud = pygame.transform.scale(pygame.image.load("IMGpesa.png").convert_alpha(), (FHUD, FHUD))
+
+def dibujar_game_over():
+    overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    pantalla.blit(overlay, (0, 0))
+
+    txt_go  = fuente_go.render("GAME OVER", True, ROJO)
+    txt_sub = fuente_sub.render("Pisaste el loto sin la pesa", True, BLANCO)
+    txt_r   = fuente_sub.render("Presiona R para reiniciar", True, AMARILLO)
+
+    pantalla.blit(txt_go,  txt_go.get_rect(center=(ANCHO//2, ALTO//2 - 60)))
+    pantalla.blit(txt_sub, txt_sub.get_rect(center=(ANCHO//2, ALTO//2 + 10)))
+    pantalla.blit(txt_r,   txt_r.get_rect(center=(ANCHO//2, ALTO//2 + 50)))
 
 while True:
     for evento in pygame.event.get():
@@ -109,67 +127,96 @@ while True:
             sys.exit()
 
         if evento.type == pygame.KEYDOWN:
-            nueva_col  = jugador_col
-            nueva_fila = jugador_fila
+            # Reiniciar con R en game over
+            if estado["game_over"]:
+                if evento.key == pygame.K_r:
+                    estado = estado_inicial()
+                continue
 
-            if evento.key == pygame.K_w or evento.key == pygame.K_UP:
-                nueva_fila -= 1
-            if evento.key == pygame.K_s or evento.key == pygame.K_DOWN:
-                nueva_fila += 1
-            if evento.key == pygame.K_a or evento.key == pygame.K_LEFT:
-                nueva_col -= 1
-            if evento.key == pygame.K_d or evento.key == pygame.K_RIGHT:
-                nueva_col += 1
+            nueva_col  = estado["jugador_col"]
+            nueva_fila = estado["jugador_fila"]
+
+            if evento.key == pygame.K_w or evento.key == pygame.K_UP:    nueva_fila -= 1
+            if evento.key == pygame.K_s or evento.key == pygame.K_DOWN:  nueva_fila += 1
+            if evento.key == pygame.K_a or evento.key == pygame.K_LEFT:  nueva_col  -= 1
+            if evento.key == pygame.K_d or evento.key == pygame.K_RIGHT: nueva_col  += 1
 
             if not es_pared(nueva_col, nueva_fila):
-                jugador_col  = nueva_col
-                jugador_fila = nueva_fila
+                estado["jugador_col"]  = nueva_col
+                estado["jugador_fila"] = nueva_fila
 
-                # Revisar si hay fruta en la nueva casilla
-                for f in frutas[:]:
-                    if f["col"] == jugador_col and f["fila"] == jugador_fila:
-                        conteo[f["tipo"]] += 1
-                        frutas.remove(f)
+                # Recoger fruta
+                for f in estado["frutas"][:]:
+                    if f["col"] == nueva_col and f["fila"] == nueva_fila:
+                        estado["conteo"][f["tipo"]] += 1
+                        estado["frutas"].remove(f)
 
-    # --- Dibujar mapa ---
+                # Recoger pesa
+                if (estado["pesa_activa"] and
+                        nueva_col == pesa["col"] and nueva_fila == pesa["fila"]):
+                    estado["tiene_pesa"] = True
+                    estado["pesa_activa"] = False
+
+                # Revisar loto
+                for loto in LOTOS:
+                    if loto["col"] == nueva_col and loto["fila"] == nueva_fila:
+                        if not estado["tiene_pesa"]:
+                            estado["game_over"] = True
+                        # Con pesa puede pasar sin perderla
+
+    # ---- DIBUJAR ----
+    # Mapa
     for fila in range(FILAS):
         for col in range(COLS):
             x = col * TILE
             y = fila * TILE
             pantalla.blit(img_pasto, (x, y))
-            if MAPA[fila][col] == 2:
-                pantalla.blit(img_arbol, (x, y))
-            elif MAPA[fila][col] == 3:
-                pantalla.blit(img_roca, (x, y))
-            elif MAPA[fila][col] == 4:
-                pantalla.blit(img_pino, (x, y))
-            elif MAPA[fila][col] == 5:
-                pantalla.blit(img_arbusto, (x, y))
+            if MAPA[fila][col] == 2: pantalla.blit(img_arbol, (x, y))
+            elif MAPA[fila][col] == 3: pantalla.blit(img_roca, (x, y))
+            elif MAPA[fila][col] == 4: pantalla.blit(img_pino, (x, y))
+            elif MAPA[fila][col] == 5: pantalla.blit(img_arbusto, (x, y))
 
-    # --- Dibujar frutas en el mapa ---
-    for f in frutas:
+    # Lotos (siempre visibles, peligrosos al peso >= 5)
+    for loto in LOTOS:
+        pantalla.blit(img_loto, (loto["col"] * TILE, loto["fila"] * TILE))
+
+    # Pesa en el mapa
+    if estado["pesa_activa"]:
+        px_p = pesa["col"] * TILE + (TILE - FTILE) // 2
+        py_p = pesa["fila"] * TILE + (TILE - FTILE) // 2
+        pantalla.blit(img_pesa, (px_p, py_p))
+
+    # Frutas en el mapa
+    for f in estado["frutas"]:
         fx = f["col"] * TILE + (TILE - FTILE) // 2
         fy = f["fila"] * TILE + (TILE - FTILE) // 2
         pantalla.blit(imgs_fruta[f["tipo"]], (fx, fy))
 
-    # --- Dibujar jugador ---
-    px = jugador_col * TILE
-    py = jugador_fila * TILE
+    # Jugador
+    px = estado["jugador_col"] * TILE
+    py = estado["jugador_fila"] * TILE
     pygame.draw.rect(pantalla, AZUL, (px + 4, py + 4, TILE - 8, TILE - 8), border_radius=6)
 
-    # --- Barra de frutas ---
+    # Barra inferior
     barra_y = FILAS * TILE
     pygame.draw.rect(pantalla, VERDE, (0, barra_y, ANCHO, 60))
 
-    label = fuente_hud.render("Frutas:", True, BLANCO)
-    pantalla.blit(label, (8, barra_y + 18))
+    # Pesa en HUD
+    if estado["tiene_pesa"]:
+        pantalla.blit(img_pesa_hud, (8, barra_y + 16))
+        txt_p = fuente_hud.render("PESA", True, AMARILLO)
+        pantalla.blit(txt_p, (8 + FHUD + 4, barra_y + 20))
 
-    x_offset = 90
+    # Frutas en HUD
+    x_offset = 160
     for tipo in ["sandia", "manzana", "naranja", "platano"]:
         pantalla.blit(imgs_hud[tipo], (x_offset, barra_y + 16))
-        num = fuente_hud.render(f"x{conteo[tipo]}", True, BLANCO)
+        num = fuente_hud.render(f"x{estado['conteo'][tipo]}", True, BLANCO)
         pantalla.blit(num, (x_offset + FHUD + 2, barra_y + 20))
         x_offset += FHUD + 45
+
+    if estado["game_over"]:
+        dibujar_game_over()
 
     pygame.display.update()
     reloj.tick(60)
