@@ -64,7 +64,7 @@ jugador_fila = 2
 def es_pared(col, fila):
     if fila < 0 or fila >= FILAS or col < 0 or col >= COLS:
         return True
-    return MAPA[fila][col] in (2, 3, 4)
+    return MAPA[fila][col] in (2, 3, 4, 5)
 
 fuente      = pygame.font.SysFont("monospace", 16)
 fuente_hud  = pygame.font.SysFont("monospace", 18, bold=True)
