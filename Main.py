@@ -4,6 +4,14 @@ import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 pygame.init()
+#FUENTES
+
+fuente     = pygame.font.SysFont("monospace", 16)
+fuente_hud = pygame.font.SysFont("monospace", 18, bold=True)
+fuente_go  = pygame.font.SysFont("monospace", 60, bold=True)
+fuente_sub = pygame.font.SysFont("monospace", 24)
+fuente_niv = pygame.font.SysFont("monospace", 48, bold=True)
+#TAMAÑOS
 
 TILE  = 40
 COLS  = 15
@@ -12,9 +20,10 @@ ANCHO = TILE * COLS
 ALTO  = TILE * FILAS + 70
 
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Mapa 15x15")
+pygame.display.set_caption("Capi: Aventura en el Laberinto")
 reloj = pygame.time.Clock()
 
+#COLORES
 BLANCO   = (255, 255, 255)
 NEGRO    = (0,   0,   0)
 AZUL     = (70,  130, 180)
@@ -71,24 +80,64 @@ LOTOS2 = [
     {"col": 5, "fila": 4},
     {"col": 9, "fila": 4},
     {"col": 7, "fila": 9},
+    {"col": 2, "fila": 13},
+    {"col": 12, "fila": 1},
+    {"col": 2, "fila":4},
+    {"col": 2, "fila": 5},
+    {"col": 2, "fila": 9},
+    {"col": 2, "fila": 10},
+    {"col": 13, "fila": 2},
+    {"col": 12, "fila": 4},
+    {"col": 12, "fila": 5},
+    {"col": 12, "fila": 9},
+    {"col": 12, "fila": 10},
+    {"col": 12, "fila": 13},
+
 ]
 
-# Enemigos: ruta de patrulla (lista de casillas en orden)
+    
 ENEMIGO1_RUTA = [
     (0,5),(1,5),(2,5),(3,5),(4,5),(5,5),(6,5),(7,5),(8,5),(9,5),(10,5),(11,5),
     (11,6),(11,7),(11,8),(11,9),
     (10,9),(9,9),(8,9),(7,9),(6,9),(5,9),(4,9),(3,9),(2,9),(1,9),(0,9),
     (0,8),(0,7),(0,6),(0,5),
 ]
-ENEMIGO2_RUTA = [
-    (7,13),(7,12),(7,11),
-    (6,11),(5,11),(4,11),
-    (4,10),(4,9),(4,8),
-    (5,7),(6,7),(8,7),(9,7),
-    (10,6),(10,5),(10,4),
-    (10,3),(10,2),(10,1),
-    (9,1),(8,1),(6,1),(5,1),(4,1),
-    (4,2),(4,3),(4,4),(4,5),(4,6),
+
+ENEMIGO3_RUTA = [
+    (7,7),(6,7),(5,7),(5,6),(5,5),(5,6),(5,7),(5,8),(5,9),(5,10),(5,11),(6,11),(7,11),(8,11),(9,11),(9,10),(9,9),(9,8),(9,7),(9,6),(9,5),(9,6),(9,7),(8,7),(7,7),
+]
+
+ENEMIGO4_RUTA = [
+    (1,6),
+    (1,5),(1,4),(1,3),(1,2),(1,1),
+    (2,1),(2,3),(2,1),
+    (1,1),
+    (1,2),(1,3),(1,4),(1,5),
+    (1,6),
+]
+ENEMIGO5_RUTA = [
+    (13,6),
+    (13,5),(13,4),(13,3),(13,2),(13,1),
+    (12,1),(11,1),
+    (12,1),(13,1),
+    (13,2),(13,3),(13,4),(13,5),
+    (13,6),
+]
+ENEMIGO6_RUTA = [
+    (1,8),
+    (1,9),(1,10),(1,11),(1,12),(1,13),
+    (2,13),(3,13),(2,13),
+    (1,13),
+    (1,12),(1,11),(1,10),(1,9),
+    (1,8),
+]
+ENEMIGO7_RUTA = [
+    (13,8),
+    (13,9),(13,10),(13,11),(13,12),(13,13),
+    (12,13),(11,13),
+    (12,13),(13,13),
+    (13,12),(13,11),(13,10),(13,9),
+    (13,8),
 ]
 
 # ─── DATOS POR NIVEL ─────────────────────────────────────────────────────────
@@ -112,7 +161,7 @@ niveles = [
         "llave_azul":  {"col": 0, "fila": 13},
         "puerta_azul": {"col": 12, "fila": 7},
         "puerta_nivel":{"col": 14, "fila": 7},  # puerta al nivel 2
-        "enemigo_ruta": ENEMIGO1_RUTA,
+        "enemigos": [ENEMIGO1_RUTA],
         "jugador_inicio": (0, 2),
     },
     {
@@ -134,7 +183,7 @@ niveles = [
         "llave_azul":  {"col": 7, "fila": 5},
         "puerta_azul": {"col": 7,  "fila": 1},
         "puerta_nivel": None,
-        "enemigo_ruta": ENEMIGO2_RUTA,
+        "enemigos": [ENEMIGO3_RUTA, ENEMIGO4_RUTA, ENEMIGO5_RUTA, ENEMIGO6_RUTA, ENEMIGO7_RUTA],
         "jugador_inicio": (1, 1),
     },
 ]
@@ -160,8 +209,10 @@ class Enemigo:
     def toca_jugador(self, jcol, jfila):
         return self.col == jcol and self.fila == jfila
 
-def nuevo_enemigo(nivel_idx):
-    return Enemigo(niveles[nivel_idx]["enemigo_ruta"])
+def nuevos_enemigos(nivel_idx):
+    n = niveles[nivel_idx]
+    rutas = n.get("enemigos", [n.get("enemigo_ruta")])
+    return [Enemigo(ruta) for ruta in rutas if ruta is not None]
 
 def frutas_completas():
     return len(estado["frutas"]) == 0
@@ -191,7 +242,7 @@ def estado_inicial(nivel_idx=0):
     }
 
 estado  = estado_inicial(0)
-enemigo = nuevo_enemigo(0)
+enemigos = nuevos_enemigos(0)
 
 def nivel_actual():
     return niveles[estado["nivel"]]
@@ -222,29 +273,29 @@ fuente_niv = pygame.font.SysFont("monospace", 48, bold=True)
 FTILE = 30
 FHUD  = 28
 
-img_colum        = pygame.transform.scale(pygame.image.load("imgcolumna.png").convert(),           (TILE, TILE))
-img_pasto        = pygame.transform.scale(pygame.image.load("imgPasto.png").convert(),             (TILE, TILE))
-img_arbol        = pygame.transform.scale(pygame.image.load("imgarbol.png").convert_alpha(),       (TILE, TILE))
-img_roca         = pygame.transform.scale(pygame.image.load("imgroca.png").convert_alpha(),        (TILE, TILE))
-img_pino         = pygame.transform.scale(pygame.image.load("imgpino.png").convert_alpha(),        (TILE, TILE))
-img_loto         = pygame.transform.scale(pygame.image.load("imglotoPiso.png").convert_alpha(),    (TILE, TILE))
-img_arbusto      = pygame.transform.scale(pygame.image.load("imgarbusto.png").convert_alpha(),     (TILE, TILE))
-img_pesa         = pygame.transform.scale(pygame.image.load("IMGpesa.png").convert_alpha(),        (FTILE, FTILE))
-img_pesa_hud     = pygame.transform.scale(pygame.image.load("IMGpesa.png").convert_alpha(),        (FHUD, FHUD))
-img_llave        = pygame.transform.scale(pygame.image.load("IMGllaveamarilla.png").convert_alpha(),(FTILE, FTILE))
-img_llave_hud    = pygame.transform.scale(pygame.image.load("IMGllaveamarilla.png").convert_alpha(),(FHUD, FHUD))
-img_puerta       = pygame.transform.scale(pygame.image.load("imgpuertamarilla.png").convert_alpha(),(TILE, TILE))
-img_llave_azul   = pygame.transform.scale(pygame.image.load("IMGllaveazul.png").convert_alpha(),   (FTILE, FTILE))
-img_llave_azul_hud = pygame.transform.scale(pygame.image.load("IMGllaveazul.png").convert_alpha(), (FHUD, FHUD))
-img_puerta_azul  = pygame.transform.scale(pygame.image.load("imgpuertaazul.png").convert_alpha(),  (TILE, TILE))
-img_capi         = pygame.transform.scale(pygame.image.load("capi.png").convert_alpha(),           (TILE, TILE))
+img_colum        = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgcolumna.png").convert(),           (TILE, TILE))
+img_pasto        = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgPasto.png").convert(),             (TILE, TILE))
+img_arbol        = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgarbol.png").convert_alpha(),       (TILE, TILE))
+img_roca         = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgroca.png").convert_alpha(),        (TILE, TILE))
+img_pino         = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgpino.png").convert_alpha(),        (TILE, TILE))
+img_loto         = pygame.transform.scale(pygame.image.load("Assets/Bloques/imglotoPiso.png").convert_alpha(),    (TILE, TILE))
+img_arbusto      = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgarbusto.png").convert_alpha(),     (TILE, TILE))
+img_pesa         = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGpesa.png").convert_alpha(),        (FTILE, FTILE))
+img_pesa_hud     = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGpesa.png").convert_alpha(),        (FHUD, FHUD))
+img_llave        = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGllaveamarilla.png").convert_alpha(),(FTILE, FTILE))
+img_llave_hud    = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGllaveamarilla.png").convert_alpha(),(FHUD, FHUD))
+img_puerta       = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgpuertamarilla.png").convert_alpha(),(TILE, TILE))
+img_llave_azul   = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGllaveazul.png").convert_alpha(),   (FTILE, FTILE))
+img_llave_azul_hud = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGllaveazul.png").convert_alpha(), (FHUD, FHUD))
+img_puerta_azul  = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgpuertaazul.png").convert_alpha(),  (TILE, TILE))
+img_capi         = pygame.transform.scale(pygame.image.load("Assets/Entidades/capi.png").convert_alpha(),           (TILE, TILE))
 
 imgs_fruta = {
-    t: pygame.transform.scale(pygame.image.load(f"IMG{t}.png").convert_alpha(), (FTILE, FTILE))
+    t: pygame.transform.scale(pygame.image.load(f"Assets/Elementos/IMG{t}.png").convert_alpha(), (FTILE, FTILE))
     for t in ["sandia", "manzana", "naranja", "platano"]
 }
 imgs_hud = {
-    t: pygame.transform.scale(pygame.image.load(f"IMG{t}.png").convert_alpha(), (FHUD, FHUD))
+    t: pygame.transform.scale(pygame.image.load(f"Assets/Elementos/IMG{t}.png").convert_alpha(), (FHUD, FHUD))
     for t in ["sandia", "manzana", "naranja", "platano"]
 }
 
@@ -293,7 +344,7 @@ while True:
             if estado["game_over"] or estado["ganaste"]:
                 if evento.key == pygame.K_r:
                     estado  = estado_inicial(0)
-                    enemigo = nuevo_enemigo(0)
+                    enemigos = nuevos_enemigos(0)
                 continue
 
             if transicion_timer > 0:
@@ -356,7 +407,7 @@ while True:
                             tiempo_guardado = estado["tiempo"]
                             estado = estado_inicial(estado["nivel"] + 1)
                             estado["tiempo"] = tiempo_guardado
-                            enemigo = nuevo_enemigo(estado["nivel"])
+                            enemigos = nuevos_enemigos(estado["nivel"])
                             transicion_timer = 120
                 for loto in n["lotos"]:
                     if loto["col"] == nueva_col and loto["fila"] == nueva_fila:
@@ -366,10 +417,12 @@ while True:
 
     # Actualizar enemigo
     if not estado["game_over"] and not estado["ganaste"] and transicion_timer == 0:
-        enemigo.update()
-        if enemigo.toca_jugador(estado["jugador_col"], estado["jugador_fila"]):
-            estado["game_over"] = True
-            estado["causa_go"] = "enemigo"
+        for enemigo in enemigos:
+            enemigo.update()
+            if enemigo.toca_jugador(estado["jugador_col"], estado["jugador_fila"]):
+                estado["game_over"] = True
+                estado["causa_go"] = "enemigo"
+                break
 
     # Contador de transición
     if transicion_timer > 0:
@@ -428,12 +481,13 @@ while True:
         if not estado["puerta_azul_abierta"]:
             pantalla.blit(img_puerta_azul, (n["puerta_nivel"]["col"] * TILE, n["puerta_nivel"]["fila"] * TILE))
 
-    # Enemigo — cubo rojo con borde naranja
-    ex = enemigo.col * TILE
-    ey = enemigo.fila * TILE
-    pygame.draw.rect(pantalla, NARANJA, (ex,     ey,     TILE,   TILE))
-    pygame.draw.rect(pantalla, ROJO,    (ex + 4, ey + 4, TILE-8, TILE-8))
-    pygame.draw.rect(pantalla, NEGRO,   (ex,     ey,     TILE,   TILE), 2)
+    # Enemigos — cubos rojos con borde naranja
+    for enemigo in enemigos:
+        ex = enemigo.col * TILE
+        ey = enemigo.fila * TILE
+        pygame.draw.rect(pantalla, NARANJA, (ex,     ey,     TILE,   TILE))
+        pygame.draw.rect(pantalla, ROJO,    (ex + 4, ey + 4, TILE-8, TILE-8))
+        pygame.draw.rect(pantalla, NEGRO,   (ex,     ey,     TILE,   TILE), 2)
 
     # Capibara
     pantalla.blit(img_capi, (estado["jugador_col"] * TILE, estado["jugador_fila"] * TILE))
