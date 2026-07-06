@@ -110,7 +110,7 @@ ENEMIGO3_RUTA = [
 ENEMIGO4_RUTA = [
     (1,6),
     (1,5),(1,4),(1,3),(1,2),(1,1),
-    (2,1),(2,3),(2,1),
+    (2,1),(3,1),(2,1),
     (1,1),
     (1,2),(1,3),(1,4),(1,5),
     (1,6),
@@ -289,7 +289,7 @@ img_llave_azul   = pygame.transform.scale(pygame.image.load("Assets/Elementos/IM
 img_llave_azul_hud = pygame.transform.scale(pygame.image.load("Assets/Elementos/IMGllaveazul.png").convert_alpha(), (FHUD, FHUD))
 img_puerta_azul  = pygame.transform.scale(pygame.image.load("Assets/Bloques/imgpuertaazul.png").convert_alpha(),  (TILE, TILE))
 img_capi         = pygame.transform.scale(pygame.image.load("Assets/Entidades/capi.png").convert_alpha(),           (TILE, TILE))
-
+img_enemigo       = pygame.transform.scale(pygame.image.load("Assets/Entidades/enemigo.png").convert_alpha(),        (TILE, TILE))
 imgs_fruta = {
     t: pygame.transform.scale(pygame.image.load(f"Assets/Elementos/IMG{t}.png").convert_alpha(), (FTILE, FTILE))
     for t in ["sandia", "manzana", "naranja", "platano"]
@@ -485,9 +485,7 @@ while True:
     for enemigo in enemigos:
         ex = enemigo.col * TILE
         ey = enemigo.fila * TILE
-        pygame.draw.rect(pantalla, NARANJA, (ex,     ey,     TILE,   TILE))
-        pygame.draw.rect(pantalla, ROJO,    (ex + 4, ey + 4, TILE-8, TILE-8))
-        pygame.draw.rect(pantalla, NEGRO,   (ex,     ey,     TILE,   TILE), 2)
+        pantalla.blit(img_enemigo, (ex, ey))
 
     # Capibara
     pantalla.blit(img_capi, (estado["jugador_col"] * TILE, estado["jugador_fila"] * TILE))
