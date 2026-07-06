@@ -80,7 +80,7 @@ LOTOS2 = [
     {"col": 5, "fila": 4},
     {"col": 9, "fila": 4},
     {"col": 7, "fila": 9},
-    {"col": 2, "fila": 13},
+    {"col": 4, "fila": 13},
     {"col": 12, "fila": 1},
     {"col": 2, "fila":4},
     {"col": 2, "fila": 5},
@@ -91,7 +91,7 @@ LOTOS2 = [
     {"col": 12, "fila": 5},
     {"col": 12, "fila": 9},
     {"col": 12, "fila": 10},
-    {"col": 12, "fila": 13},
+    {"col": 10, "fila": 13},
 
 ]
 
